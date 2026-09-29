@@ -22,7 +22,7 @@ img{max-width:100%}
 :root{
   --bg:#eef1f3; --panel:#ffffff; --ink:#15212a; --muted:#5b6a75; --line:#d5dce1;
   --accent:#0b5c6e; --accent-ink:#ffffff; --plate-band:#1a3f9a;
-  --s-doca:#b7791f; --s-ovacao:#2b6cb0; --s-doc:#6b46c1; --s-lacre:#c05621; --s-cavalo:#4a5560; --s-saida:#2f855a; --s-liberado:#15803d;
+  --s-doca:#b7791f; --s-ovacao:#2b6cb0; --s-doc:#6b46c1; --s-lacre:#c05621; --s-cavalo:#4a5560; --s-saida:#2f855a; --s-liberado:#15803d; --s-docum:#b83280; --s-vazio:#0e7490;
   --tint:rgba(11,92,110,.08); --bubble:#e7f6e4;
   --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -31,12 +31,12 @@ img{max-width:100%}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f171c; --panel:#172229; --ink:#e6edf1; --muted:#95a5b0; --line:#2a3943;
   --accent:#4fb3c8; --accent-ink:#06222a; --plate-band:#3b62c4;
-  --s-doca:#e0a84a; --s-ovacao:#63a4e8; --s-doc:#a78bfa; --s-lacre:#f08a4b; --s-cavalo:#9aa7b1; --s-saida:#5cc28b; --s-liberado:#4ade80;
+  --s-doca:#e0a84a; --s-ovacao:#63a4e8; --s-doc:#a78bfa; --s-lacre:#f08a4b; --s-cavalo:#9aa7b1; --s-saida:#5cc28b; --s-liberado:#4ade80; --s-docum:#f472b6; --s-vazio:#22d3ee;
   --tint:rgba(79,179,200,.12); --bubble:#1d3a33; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f171c; --panel:#172229; --ink:#e6edf1; --muted:#95a5b0; --line:#2a3943;
   --accent:#4fb3c8; --accent-ink:#06222a; --plate-band:#3b62c4;
-  --s-doca:#e0a84a; --s-ovacao:#63a4e8; --s-doc:#a78bfa; --s-lacre:#f08a4b; --s-cavalo:#9aa7b1; --s-saida:#5cc28b; --s-liberado:#4ade80;
+  --s-doca:#e0a84a; --s-ovacao:#63a4e8; --s-doc:#a78bfa; --s-lacre:#f08a4b; --s-cavalo:#9aa7b1; --s-saida:#5cc28b; --s-liberado:#4ade80; --s-docum:#f472b6; --s-vazio:#22d3ee;
   --tint:rgba(79,179,200,.12); --bubble:#1d3a33; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
@@ -62,7 +62,7 @@ section{display:flex;flex-direction:column;gap:10px}
 .tile .n{font-family:var(--f-display);font-weight:700;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
 .tile .l{font-size:12.5px;color:var(--muted);line-height:1.25}
 .tile.total{--c:var(--accent);background:var(--tint);grid-column:1/-1;flex-direction:row;align-items:baseline;gap:10px}
-.opt-grid.st .stt:nth-child(5):last-child{grid-column:1/-1}
+.card .opt-grid.st{gap:3px}
 @media (max-width:520px){.board{grid-template-columns:repeat(2,1fr)}}
 
 /* formulário */
@@ -82,6 +82,9 @@ fieldset.opts legend{padding:0;margin-bottom:6px;font-size:12.5px;font-weight:60
 .opt.stt[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:var(--accent-ink)}
 .card .opt-grid.st{grid-column:1/-1}
 .card .opt{min-height:40px;font-size:13px}
+.opt-grid.st,.card .opt-grid.st{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.opt-grid.st .opt.stt{min-height:40px;padding:4px 4px;font-size:12.5px;letter-spacing:0;border-left-width:4px;border-radius:6px;line-height:1.15;text-align:center;white-space:normal;overflow-wrap:break-word;min-width:0}
+.card .opt-grid.st .opt.stt{min-height:36px;padding:3px 4px;font-size:12.5px}
 .search{font-size:16px}
 .mono{font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
 .opt-grid.plates{grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:4px}
@@ -102,6 +105,7 @@ fieldset.opts legend{padding:0;margin-bottom:6px;font-size:12.5px;font-weight:60
 .picked{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--tint);border:1px solid var(--accent);border-radius:8px;padding:10px 12px;font-weight:600}
 .picked span{flex:1 1 auto;min-width:0}
 .meta .mot{font-size:13.5px}
+.meta .cont{font-family:var(--f-mono);font-weight:600;font-size:14px;letter-spacing:.04em}
 .cad-row{display:flex;align-items:center;gap:8px;justify-content:space-between;border-bottom:1px solid var(--line);padding-block:6px}
 .cad-row:last-child{border-bottom:0}
 .cad-row small{color:var(--muted)}
@@ -187,6 +191,10 @@ details summary{cursor:pointer;font-weight:600}
     <h2 id="h-add">Registrar carreta</h2>
     <div class="panel">
       <form id="form" autocomplete="off">
+        <label class="full">Nº do container
+          <input id="f-cont" class="mono" maxlength="11" placeholder="MSCU1234567" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
+          <span class="hint" id="f-cont-hint">4 letras + 7 números</span>
+        </label>
         <fieldset class="full opts"><legend>Placa</legend>
           <input id="f-placa-busca" class="search mono" placeholder="Filtrar placa (ex.: TDN)" autocomplete="off">
           <div class="opt-grid plates" id="f-placa-grid" role="group" aria-label="Placa"></div>
@@ -272,11 +280,13 @@ details summary{cursor:pointer;font-weight:600}
 <script>
 (function(){
   var STATUS = [
-    {id:"aguard_doca",  label:"Aguardando doca (vazio)",            short:"Aguardando doca",   c:"--s-doca"},
-    {id:"na_doca",      label:"Na doca – em ovação",                short:"Na doca / ovação",  c:"--s-ovacao"},
-    {id:"aguard_doc",   label:"Carregado – aguardando documentação", short:"Aguard. documentação", c:"--s-doc"},
-    {id:"aguard_lacre", label:"Aguardando lacre da vigilância",     short:"Aguard. lacre",     c:"--s-lacre"},
-    {id:"liberado",     label:"Liberado para viagem",               short:"Liberado p/ viagem", c:"--s-liberado"}
+    {id:"arame",    label:"LACRE ARAME",                       short:"Lacre arame",       c:"--s-doca"},
+    {id:"sif",      label:"LACRE SIF",                         short:"Lacre SIF",         c:"--s-ovacao"},
+    {id:"sif_eng",  label:"LACRE SIF (ENGATADO)",              short:"SIF engatado",      c:"--s-doc"},
+    {id:"sif_cte",  label:"LACRE SIF (LACRADO / FALTA CTE)",   short:"SIF falta CTE",     c:"--s-lacre"},
+    {id:"liberado", label:"ENGATADO (LIBERADO)",               short:"Engatado liberado", c:"--s-liberado"},
+    {id:"docum",    label:"AGUARDANDO DOCUMENTAÇÃO",           short:"Aguard. documentação", c:"--s-docum"},
+    {id:"vazio",    label:"VAZIO",                             short:"Vazio",             c:"--s-vazio"}
   ];
   var ARMADORES = ["CMA CGM","COSCO","HAPAG","HYUNDAI","MAERSK","MSC","MSC PROBES","YANG MING"];
   var KEY = "patio-vibra-v1", KEY_CFG = "patio-vibra-cfg", KEY_CAD = "patio-vibra-cadastros";
@@ -305,10 +315,16 @@ details summary{cursor:pointer;font-weight:600}
   function normPlaca(v){return (v||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
   function validPlaca(p){return /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(p)}
   function showPlaca(p){return /^[A-Z]{3}[0-9]{4}$/.test(p)?p.slice(0,3)+"-"+p.slice(3):p}
+  function normCont(v){return (v||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,11)}
+  function validCont(c){return /^[A-Z]{4}[0-9]{7}$/.test(c)}
+  function showCont(c){return c||""}
   function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
   function el(tag, attrs, kids){var e=document.createElement(tag);if(attrs)for(var k in attrs){if(k==="text")e.textContent=attrs[k];else if(k==="style")e.style.cssText=attrs[k];else e.setAttribute(k,attrs[k])}(kids||[]).forEach(function(c){if(c)e.appendChild(c)});return e}
   function active(){return state.rows.filter(function(r){return !r.saida})}
 
+  // converte situações da versão anterior
+  var OLD={aguard_doca:"arame",na_doca:"sif",aguard_doc:"sif_eng",aguard_lacre:"sif_cte"};
+  state.rows.forEach(function(r){if(OLD[r.status])r.status=OLD[r.status]});
   // prune: saídas com mais de 7 dias
   var cutoff = Date.now()-7*864e5;
   state.rows = state.rows.filter(function(r){return !r.saida || r.saida>cutoff}); save();
@@ -336,6 +352,15 @@ details summary{cursor:pointer;font-weight:600}
   renderFormOpts();
 
   var formPlaca="", formMot="";
+  (function(){
+    var inp=byId("f-cont"), hint=byId("f-cont-hint");
+    inp.addEventListener("input",function(){
+      var pos=inp.selectionStart, before=inp.value, v=normCont(before);
+      if(v!==before){inp.value=v; try{inp.setSelectionRange(Math.min(pos,v.length),Math.min(pos,v.length))}catch(e){}}
+      hint.textContent=!v?"4 letras + 7 números":(validCont(v)?"Container OK":"Formato: 4 letras + 7 números ("+v.length+"/11)");
+      hint.style.color=v&&validCont(v)?"var(--s-saida)":"";
+    });
+  })();
   function renderPlacas(){
     var g=byId("f-placa-grid"), q=normPlaca(byId("f-placa-busca").value); g.textContent="";
     var emPlanta={}; active().forEach(function(r){emPlanta[r.placa]=1});
@@ -423,15 +448,19 @@ details summary{cursor:pointer;font-weight:600}
   byId("form").addEventListener("submit",function(ev){
     ev.preventDefault();
     var msg=byId("form-msg"); msg.className="msg full";
+    var cont=normCont(byId("f-cont").value);
     var p=formPlaca;
+    if(!validCont(cont)){msg.className="msg full err";msg.textContent="Digite o nº do container: 4 letras + 7 números (ex.: MSCU1234567).";byId("f-cont").focus();return}
+    if(active().some(function(r){return r.container===cont})){msg.className="msg full err";msg.textContent="O container "+cont+" já está em planta.";return}
     var arm=formArm==="Outro"?byId("f-outro").value.trim():formArm;
     if(!p){msg.className="msg full err";msg.textContent="Toque em uma placa da lista (ou cadastre uma nova).";return}
     if(!arm){msg.className="msg full err";msg.textContent="Toque no armador.";return}
     if(active().some(function(r){return r.placa===p})){msg.className="msg full err";msg.textContent=showPlaca(p)+" já está em planta. Atualize a carreta na lista abaixo.";return}
     var now=Date.now();
-    state.rows.push({id:uid(),placa:p,armador:arm,motorista:formMot,status:formStatus,semCavalo:byId("f-cavalo").checked,entrada:now,desde:now,saida:null});
+    state.rows.push({id:uid(),container:cont,placa:p,armador:arm,motorista:formMot,status:formStatus,semCavalo:byId("f-cavalo").checked,entrada:now,desde:now,saida:null});
     if(!save()){msg.className="msg full err";msg.textContent="Não foi possível salvar neste navegador. Verifique se não está em aba anônima.";}
-    else msg.textContent=showPlaca(p)+" registrada às "+fmtH(now)+".";
+    else msg.textContent=cont+" / "+showPlaca(p)+" registrado às "+fmtH(now)+".";
+    byId("f-cont").value="";byId("f-cont-hint").textContent="4 letras + 7 números";byId("f-cont-hint").style.color="";
     formPlaca="";formMot="";byId("f-placa-busca").value="";closeNovoMot();byId("f-cavalo").checked=false;byId("f-outro").value="";formArm="";formStatus=STATUS[0].id;byId("lbl-outro").hidden=true;renderFormOpts();
     render();
   });
@@ -473,6 +502,7 @@ details summary{cursor:pointer;font-weight:600}
       card.appendChild(el("div",{class:"plate"},[el("span",{text:showPlaca(r.placa)})]));
       var meta=el("div",{class:"meta"},[
         el("div",{},[el("span",{class:"pill",text:s.short}),r.semCavalo?el("span",{class:"pill cavalo",text:"Sem cavalo"}):null]),
+        r.container?el("span",{class:"cont",text:r.container}):null,
         el("span",{class:"arm",text:r.armador}),
         r.motorista?el("span",{class:"mot",text:r.motorista}):null,
         el("span",{class:"since",text:"Nesta situação há "+dur(r.desde)+" · entrou "+fmtDT(r.entrada)})
@@ -503,11 +533,13 @@ details summary{cursor:pointer;font-weight:600}
 
   // Resumo para WhatsApp: tabelas em bloco monoespaçado (```), até 27 colunas para caber na tela do celular
   var WA = {
-    aguard_doca:  {ico:"🟡", tab:"Aguard. doca (vazio)", head:"AGUARDANDO DOCA (VAZIO)"},
-    na_doca:      {ico:"🔵", tab:"Na doca / ovação",     head:"NA DOCA – EM OVAÇÃO"},
-    aguard_doc:   {ico:"🟣", tab:"Aguard. documentação", head:"AGUARDANDO DOCUMENTAÇÃO"},
-    aguard_lacre: {ico:"🟠", tab:"Aguard. lacre",        head:"AGUARDANDO LACRE"},
-    liberado:     {ico:"🟢", tab:"Liberado p/ viagem",   head:"LIBERADO PARA VIAGEM"}
+    arame:    {ico:"🟡", tab:"Lacre arame",           head:"LACRE ARAME"},
+    sif:      {ico:"🔵", tab:"Lacre SIF",             head:"LACRE SIF"},
+    sif_eng:  {ico:"🟣", tab:"Lacre SIF (engatado)",  head:"LACRE SIF (ENGATADO)"},
+    sif_cte:  {ico:"🟠", tab:"SIF lacrado/falta CTE", head:"LACRE SIF (LACRADO / FALTA CTE)"},
+    liberado: {ico:"🟢", tab:"Engatado (liberado)",   head:"ENGATADO (LIBERADO)"},
+    docum:    {ico:"🟤", tab:"Aguard. documentação",  head:"AGUARDANDO DOCUMENTAÇÃO"},
+    vazio:    {ico:"⚪", tab:"Vazio",                 head:"VAZIO"}
   };
   var ABREV = {};
   var LINE = "───────────────────────────";
@@ -536,7 +568,7 @@ details summary{cursor:pointer;font-weight:600}
         if(!g.length) return;
         t+="\n\n*"+WA[s.id].ico+" "+WA[s.id].head+" ("+g.length+")*\n";
         var lines=[rpad("PLACA",9)+rpad("ARMADOR",11)+lpad("TEMPO",5)];
-        g.forEach(function(r){if(r.semCavalo)anySC=true;lines.push(rpad(showPlaca(r.placa),9)+rpad(arm(r.armador),11)+lpad(durC(r.desde),5)+(r.semCavalo?" SC":""))});
+        g.forEach(function(r){if(r.semCavalo)anySC=true;lines.push(rpad(showPlaca(r.placa),9)+rpad(arm(r.armador),11)+lpad(durC(r.desde),5)+(r.semCavalo?" SC":""));if(r.container)lines.push("  └ "+r.container)});
         t+="```\n"+lines.join("\n")+"\n```";
       });
       t+="\n\n_Tempo = há quanto está na situação atual"+(anySC?" · SC = sem cavalo":"")+"_";
@@ -577,11 +609,11 @@ details summary{cursor:pointer;font-weight:600}
   function selectPreview(){var r=document.createRange();r.selectNodeContents(byId("preview"));var s=window.getSelection();s.removeAllRanges();s.addRange(r)}
 
   function csv(){
-    var head=["Placa","Motorista","Armador","Situação","Sem cavalo","Entrada","Na situação desde","Saída"];
+    var head=["Container","Placa","Motorista","Armador","Situação","Sem cavalo","Entrada","Na situação desde","Saída"];
     var lines=[head.join(";")];
     state.rows.slice().sort(function(a,b){return a.entrada-b.entrada}).forEach(function(r){
       var s=st(r.status);
-      lines.push([showPlaca(r.placa),r.motorista||"",r.armador,r.saida?"Saiu":(s?s.label:r.status),r.semCavalo?"Sim":"Não",fmtFull(r.entrada),fmtFull(r.desde),r.saida?fmtFull(r.saida):""].map(function(v){v=String(v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(";"));
+      lines.push([r.container||"",showPlaca(r.placa),r.motorista||"",r.armador,r.saida?"Saiu":(s?s.label:r.status),r.semCavalo?"Sim":"Não",fmtFull(r.entrada),fmtFull(r.desde),r.saida?fmtFull(r.saida):""].map(function(v){v=String(v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(";"));
     });
     return "﻿"+lines.join("\r\n");
   }
@@ -612,7 +644,7 @@ details summary{cursor:pointer;font-weight:600}
     rows.forEach(function(r){
       var card=el("div",{class:"card",style:"--c:var(--s-saida)"},[
         el("div",{class:"plate"},[el("span",{text:showPlaca(r.placa)})]),
-        el("div",{class:"meta"},[el("span",{class:"arm",text:r.armador}),r.motorista?el("span",{class:"mot",text:r.motorista}):null,el("span",{class:"since",text:"Entrou "+fmtH(r.entrada)+" · saiu "+fmtH(r.saida)})])
+        el("div",{class:"meta"},[r.container?el("span",{class:"cont",text:r.container}):null,el("span",{class:"arm",text:r.armador}),r.motorista?el("span",{class:"mot",text:r.motorista}):null,el("span",{class:"since",text:"Entrou "+fmtH(r.entrada)+" · saiu "+fmtH(r.saida)})])
       ]);
       var undo=el("button",{type:"button",class:"btn small",text:"Desfazer saída"});
       undo.addEventListener("click",function(){update(r.id,{saida:null})});

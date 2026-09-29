@@ -1,6 +1,6 @@
 // Guarda o app no aparelho para abrir mesmo sem internet.
 // Ao publicar uma versão nova, troque o número abaixo (v1 -> v2).
-const CACHE = "patio-v1";
+const CACHE = "patio-v5";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
