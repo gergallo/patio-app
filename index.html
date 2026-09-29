@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b5c6e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pátio">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Pátio Vibra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+/* Layout: uma coluna de pátio — placar por situação no topo, cadastro, fila de carretas por status, envio do resumo */
+:root{
+  --bg:#eef1f3; --panel:#ffffff; --ink:#15212a; --muted:#5b6a75; --line:#d5dce1;
+  --accent:#0b5c6e; --accent-ink:#ffffff; --plate-band:#1a3f9a;
+  --s-doca:#b7791f; --s-ovacao:#2b6cb0; --s-doc:#6b46c1; --s-lacre:#c05621; --s-cavalo:#4a5560; --s-saida:#2f855a; --s-liberado:#15803d;
+  --tint:rgba(11,92,110,.08); --bubble:#e7f6e4;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f171c; --panel:#172229; --ink:#e6edf1; --muted:#95a5b0; --line:#2a3943;
+  --accent:#4fb3c8; --accent-ink:#06222a; --plate-band:#3b62c4;
+  --s-doca:#e0a84a; --s-ovacao:#63a4e8; --s-doc:#a78bfa; --s-lacre:#f08a4b; --s-cavalo:#9aa7b1; --s-saida:#5cc28b; --s-liberado:#4ade80;
+  --tint:rgba(79,179,200,.12); --bubble:#1d3a33; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171c; --panel:#172229; --ink:#e6edf1; --muted:#95a5b0; --line:#2a3943;
+  --accent:#4fb3c8; --accent-ink:#06222a; --plate-band:#3b62c4;
+  --s-doca:#e0a84a; --s-ovacao:#63a4e8; --s-doc:#a78bfa; --s-lacre:#f08a4b; --s-cavalo:#9aa7b1; --s-saida:#5cc28b; --s-liberado:#4ade80;
+  --tint:rgba(79,179,200,.12); --bubble:#1d3a33; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:18px 48px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-weight:700;font-size:30px;letter-spacing:.01em;margin:0;line-height:1}
+h1 small{display:block;font-size:13px;font-family:var(--f-body);font-weight:500;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.hdr-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.theme-seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:3px;gap:2px}
+.theme-seg button{font:inherit;font-size:13px;font-weight:600;border:0;background:transparent;color:var(--muted);padding:6px 12px;border-radius:999px;cursor:pointer}
+.theme-seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+@media (max-width:420px){.hdr-side{align-items:flex-start}}
+.clock{font-family:var(--f-mono);color:var(--muted);font-size:13px}
+h2{font-family:var(--f-display);font-size:19px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin:0;color:var(--muted);text-wrap:balance}
+section{display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.notice{font-size:13px;color:var(--muted);border-left:3px solid var(--s-doca);padding:6px 10px;background:var(--panel);border-radius:0 8px 8px 0}
+
+/* placar */
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;border-top:4px solid var(--c,var(--accent));cursor:pointer;text-align:left;font:inherit;color:inherit}
+.tile[aria-pressed="true"]{outline:2px solid var(--c,var(--accent));outline-offset:-1px}
+.tile .n{font-family:var(--f-display);font-weight:700;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.tile .l{font-size:12.5px;color:var(--muted);line-height:1.25}
+.tile.total{--c:var(--accent);background:var(--tint);grid-column:1/-1;flex-direction:row;align-items:baseline;gap:10px}
+.opt-grid.st .stt:nth-child(5):last-child{grid-column:1/-1}
+@media (max-width:520px){.board{grid-template-columns:repeat(2,1fr)}}
+
+/* formulário */
+form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.03em;text-transform:uppercase}
+input,select,textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;min-width:0;width:100%}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#f-placa{font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.full{grid-column:1/-1}
+fieldset.opts{border:0;margin:0;padding:0;min-width:0;display:flex;flex-direction:column;gap:6px}
+fieldset.opts legend{padding:0;margin-bottom:6px;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.03em;text-transform:uppercase}
+.opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+.opt-grid.st{grid-template-columns:repeat(2,1fr)}
+.opt{font:inherit;font-size:15px;font-weight:600;min-height:46px;padding:8px 6px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;line-height:1.2;text-align:center}
+.opt.stt{border-left:5px solid var(--c);text-align:left;padding-left:10px;font-size:14px}
+.opt[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.opt.stt[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:var(--accent-ink)}
+.card .opt-grid.st{grid-column:1/-1}
+.card .opt{min-height:40px;font-size:13px}
+.search{font-size:16px}
+.mono{font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+.opt-grid.plates{grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:4px}
+.opt-grid.plates .opt{min-height:32px;padding:4px 2px;font-size:12.5px;border-radius:6px;letter-spacing:.02em}
+.opt-grid.plates .opt small{font-size:9px}
+#f-armador{grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:4px}
+#f-armador .opt{min-height:32px;padding:4px 2px;font-size:12.5px;border-radius:6px}
+.opt.plate-opt{font-family:var(--f-mono);letter-spacing:.05em;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.opt.plate-opt small{font-family:var(--f-body);font-size:10.5px;font-weight:500;letter-spacing:0;opacity:.8}
+.opt:disabled{opacity:.45;cursor:not-allowed}
+.opt-grid.mots{grid-template-columns:1fr}
+.opt.mot-opt{text-align:left;padding-left:12px;font-size:14px}
+.opt.mot-new{border-style:dashed;color:var(--accent)}
+.hint{font-size:13px;color:var(--muted)}
+.add-new{align-self:flex-start;color:var(--accent);padding-left:0}
+.new-box{display:flex;gap:6px;flex-wrap:wrap}
+.new-box input{flex:1 1 150px;width:auto}
+.picked{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--tint);border:1px solid var(--accent);border-radius:8px;padding:10px 12px;font-weight:600}
+.picked span{flex:1 1 auto;min-width:0}
+.meta .mot{font-size:13.5px}
+.cad-row{display:flex;align-items:center;gap:8px;justify-content:space-between;border-bottom:1px solid var(--line);padding-block:6px}
+.cad-row:last-child{border-bottom:0}
+.cad-row small{color:var(--muted)}
+.dd{position:relative}
+.dd-btn{font:inherit;font-size:14px;width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px;cursor:pointer}
+.dd-btn span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd-btn.is-empty span:first-child{color:var(--muted)}
+.dd-panel{margin-top:4px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);overflow:hidden}
+.dd-filter{border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;font-size:14px!important;padding:8px 10px!important;background:var(--panel)!important}
+.dd-list{max-height:300px;overflow-y:auto;overscroll-behavior:contain}
+.dd-item{display:block;width:100%;font:inherit;font-size:12px;line-height:1.2;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);padding:7px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.dd-item:last-child{border-bottom:0}
+.dd-item[aria-selected="true"]{background:var(--tint);font-weight:600}
+.dd-item.new{color:var(--accent);font-weight:600}
+.dd-empty{font-size:12.5px;color:var(--muted);padding:8px 10px}
+.check{flex-direction:row;align-items:center;gap:8px;text-transform:none;font-size:14.5px;font-weight:500;color:var(--ink);letter-spacing:0}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+@media (max-width:520px){form{grid-template-columns:1fr}}
+.btn{font:inherit;font-weight:600;border-radius:8px;padding:11px 16px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.small{padding:7px 10px;font-size:13.5px}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--s-lacre)}
+.msg{font-size:13.5px;min-height:1.2em;color:var(--muted)}
+.msg.err{color:var(--s-lacre)}
+
+/* lista */
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.list{display:flex;flex-direction:column;gap:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:12px;display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center}
+.plate{font-family:var(--f-mono);font-weight:600;font-size:17px;letter-spacing:.06em;border:2px solid var(--ink);border-radius:5px;background:#fff;color:#111;min-width:108px;text-align:center;overflow:hidden;line-height:1}
+.plate::before{content:"BRASIL";display:block;background:var(--plate-band);color:#fff;font-family:var(--f-body);font-size:8px;letter-spacing:.2em;padding:2px 0}
+.plate span{display:block;padding:5px 8px 6px}
+.meta{min-width:0;display:flex;flex-direction:column;gap:2px}
+.meta .arm{font-weight:600}
+.meta .since{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--c);color:var(--c);margin-right:4px}
+.pill.cavalo{--c:var(--s-cavalo)}
+.actions{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.actions select{width:auto;flex:1 1 220px;font-size:14.5px;padding:8px}
+.empty{text-align:center;color:var(--muted);padding:26px 14px;border:1px dashed var(--line);border-radius:10px;background:var(--panel)}
+.empty strong{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+.confirm{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+
+/* resumo */
+.preview{font-family:var(--f-body);background:var(--bubble);border:1px solid var(--line);border-radius:10px 10px 10px 2px;padding:10px 12px;font-size:14px;max-height:420px;overflow:auto;display:flex;flex-direction:column;gap:1px;max-width:360px}
+.preview .wa-mono{font-family:var(--f-mono);font-size:12.5px;white-space:pre;line-height:1.5;margin-block:4px;overflow-x:auto}
+.preview .wa-gap{height:8px}
+.preview-label{font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.03em;text-transform:uppercase}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row > *{flex:1 1 auto}
+.num-show{font-family:var(--f-mono);font-size:13px;color:var(--muted);user-select:all}
+details summary{cursor:pointer;font-weight:600}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <h1><small>Torre de Controle · Planta Vibra</small>Pátio Vibra</h1>
+    <div class="hdr-side">
+      <div class="theme-seg" id="theme" role="group" aria-label="Tema">
+        <button type="button" data-t="auto">Automático</button>
+        <button type="button" data-t="light">Claro</button>
+        <button type="button" data-t="dark">Escuro</button>
+      </div>
+      <div class="clock" id="clock">--/-- --:--</div>
+    </div>
+  </header>
+
+  <div class="notice" id="storage-notice">Os registros ficam salvos neste aparelho. Use sempre o mesmo celular e o ícone instalado, e exporte a planilha no fim do turno.</div>
+
+  <section aria-labelledby="h-board">
+    <h2 id="h-board">Situação agora</h2>
+    <div class="board" id="board"></div>
+  </section>
+
+  <section aria-labelledby="h-add">
+    <h2 id="h-add">Registrar carreta</h2>
+    <div class="panel">
+      <form id="form" autocomplete="off">
+        <fieldset class="full opts"><legend>Placa</legend>
+          <input id="f-placa-busca" class="search mono" placeholder="Filtrar placa (ex.: TDN)" autocomplete="off">
+          <div class="opt-grid plates" id="f-placa-grid" role="group" aria-label="Placa"></div>
+          <button type="button" class="btn small ghost add-new" id="btn-nova-placa">+ Cadastrar nova placa</button>
+          <div class="new-box" id="box-nova-placa" hidden>
+            <input id="f-placa-nova" class="mono" maxlength="8" placeholder="ABC1D23" autocomplete="off">
+            <button type="button" class="btn small primary" id="btn-salvar-placa">Salvar placa</button>
+            <button type="button" class="btn small" id="btn-cancelar-placa">Cancelar</button>
+          </div>
+        </fieldset>
+        <fieldset class="full opts"><legend>Motorista</legend>
+          <div class="dd" id="dd-mot">
+            <button type="button" class="dd-btn" id="f-mot" aria-haspopup="listbox" aria-expanded="false"><span id="f-mot-label">Selecione o motorista</span><span aria-hidden="true">▾</span></button>
+            <div class="dd-panel" id="dd-mot-panel" hidden>
+              <input id="dd-mot-filtro" class="dd-filter" placeholder="Filtrar nome…" autocomplete="off">
+              <div class="dd-list" id="dd-mot-list" role="listbox" aria-label="Motoristas"></div>
+            </div>
+          </div>
+          <div class="new-box" id="box-novo-mot" hidden>
+            <input id="f-mot-novo" placeholder="Nome e sobrenome" autocomplete="off" style="text-transform:uppercase">
+            <button type="button" class="btn small primary" id="btn-salvar-mot">Salvar motorista</button>
+            <button type="button" class="btn small" id="btn-cancelar-mot">Cancelar</button>
+          </div>
+        </fieldset>
+        <fieldset class="full opts"><legend>Armador</legend>
+          <div class="opt-grid" id="f-armador" role="group" aria-label="Armador"></div>
+        </fieldset>
+        <label class="full" id="lbl-outro" hidden>Nome do armador
+          <input id="f-outro" name="outro" placeholder="Digite o armador">
+        </label>
+        <fieldset class="full opts"><legend>Situação</legend>
+          <div class="opt-grid st" id="f-status" role="group" aria-label="Situação"></div>
+        </fieldset>
+        <label class="check full"><input type="checkbox" id="f-cavalo"> Carreta sem cavalo</label>
+        <div class="full row">
+          <button class="btn primary" type="submit">Registrar entrada</button>
+        </div>
+        <div class="msg full" id="form-msg" role="status"></div>
+      </form>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-send">
+    <h2 id="h-send">Resumo para o WhatsApp</h2>
+    <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+      <label>WhatsApp de quem recebe (com DDD)
+        <input id="f-fone" inputmode="tel" placeholder="(11) 91234-5678">
+      </label>
+      <label class="check"><input type="checkbox" id="f-placas" checked> Incluir as placas no resumo</label>
+      <span class="preview-label">Prévia da mensagem</span>
+      <div class="preview" id="preview"></div>
+      <div class="row">
+        <a class="btn primary" id="btn-wa" href="#" target="_blank" rel="noopener">Abrir no WhatsApp</a>
+        <button class="btn" type="button" id="btn-copy">Copiar resumo</button>
+      </div>
+      <div class="msg" id="send-msg" role="status"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-list">
+    <h2 id="h-list">Carretas em planta</h2>
+    <div class="filters" id="filters"></div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <section aria-labelledby="h-exp">
+    <h2 id="h-exp">Planilha</h2>
+    <div class="panel" style="display:flex;flex-direction:column;gap:10px">
+      <div class="row">
+        <button class="btn" type="button" id="btn-csv">Exportar para Excel (.csv)</button>
+        <button class="btn ghost" type="button" id="btn-hist">Ver saídas de hoje</button>
+      </div>
+      <div class="msg" id="exp-msg" role="status"></div>
+      <div class="list" id="hist" hidden></div>
+      <details id="cad-det">
+        <summary>Cadastros adicionados neste aparelho</summary>
+        <div id="cad-list" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"></div>
+      </details>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var STATUS = [
+    {id:"aguard_doca",  label:"Aguardando doca (vazio)",            short:"Aguardando doca",   c:"--s-doca"},
+    {id:"na_doca",      label:"Na doca – em ovação",                short:"Na doca / ovação",  c:"--s-ovacao"},
+    {id:"aguard_doc",   label:"Carregado – aguardando documentação", short:"Aguard. documentação", c:"--s-doc"},
+    {id:"aguard_lacre", label:"Aguardando lacre da vigilância",     short:"Aguard. lacre",     c:"--s-lacre"},
+    {id:"liberado",     label:"Liberado para viagem",               short:"Liberado p/ viagem", c:"--s-liberado"}
+  ];
+  var ARMADORES = ["CMA CGM","COSCO","HAPAG","HYUNDAI","MAERSK","MSC","MSC PROBES","YANG MING"];
+  var KEY = "patio-vibra-v1", KEY_CFG = "patio-vibra-cfg", KEY_CAD = "patio-vibra-cadastros";
+  var PLACAS_BASE = ["QQB2088", "QUU1629", "RNQ2B15", "RTN1J22", "RUC2A32", "RUE2E76", "RUP9H97", "RUQ8B62", "RUQ8B67", "RUQ8B71", "RUR5H32", "RUR6D33", "SHY1F41", "SHZ1J44", "TDN0D65", "TDN0E01", "TDN0E07", "TDN0E47", "TDN0E61"];
+  var MOTORISTAS_BASE = ["ALEX GONCALVES DOS SANTOS", "ALEXSANDRO PEREIRA", "ANDERSON DE PAIVA", "ANDERSON DE PAULA SILVA", "ANDERSON DJALMA DOS SANTOS", "ANDERSON DOLABELLA BENTO", "ARLINDO BERNARDO MARIO", "AUROLUCIO SOUZA SILVA", "BENEDITO UMBELINO", "BRUNO SIMOES LIMA", "CARLOS EDUARDO DA SILVA JUNIOR", "CARLOS EDUARDO INDIANO FERREIRA", "CLAUDECI ROBERTO PINTO", "CRISTIANO ONESIO MARQUES DA SILVA", "CRSTIANO ONESIO", "DANIEL GLORIA", "DANIEL LEANDRO DOS SANTOS", "DANILO SILVA", "DAVI MESSIAS DOS ANJOS", "DIMELENON RICARDO FERNANDES", "DIOGO HENRIQUE MACHADO", "EDGARD DA SILVA", "EDILSON DE LAMANCHE DE ASSIS", "EDNEISON FURTADO", "EDNEY DIAS BARBOSA", "EDSON DOS SANTOS SILVA", "EDSON MARCIO ALMEIDA DA CONCEICAO", "EDUARDO JORGE FERREIRA", "EDVAN ARAUJO", "ERICO CLAUDINO COELHO DE OLIVEIRA", "ERICO POMPILIO DA SILVA", "EUZINARIO MARQUES DE BRITO", "EVERTON GONCALVES MOREIRA", "EVIL MERODRAQUE DA SILVA NETO", "FABIANO SOARES DE ALMEIDA", "FABIO FAGUNDES DE SOUZA", "FABIO OLIVEIRA DE SOUZA", "FABIO QUIRINO COELHO", "FERNANDES DOS REIS SANTANA", "FRANCINALDO PAULO DA COSTA", "GERSON MANOEL", "IVERSON MOREIRA NOGUEIRA", "IVO GONÇALVES AMARANTE", "JACKSON PEREIRA ANACLETO", "JOAO CLAUDIO PINTO", "JOAO GERALDO PINTO", "JONATAN VITOR DE ALCANTARA", "JORGE LUIS GOMES", "JOSAFA SIQUEIRA CAMPOS", "JOSE HELIO DE SOUZA", "JOSE NELSON DE MEDEIROS", "JOSENALDO GOMES DA COSTA", "JOVINO RODRIGUES", "JUCIMAR MARINS DOS SANTOS", "JUNIOR EDUARDO DE FREITAS CARDOSO", "LEANDRO SALES AMANCIO", "LEDIMIR CASSEMIRO PENETRA", "LEONARDO ARAUJO", "LEONARDO AUGUSTO ALVES ARRUDA", "LEONARDO GUEDES PINTO", "LEONARDO PAULINO DE SOUZA", "LUAN LIMA DE OLIVEIRA", "LUCAS DUTRA VIEIRA", "LUCIANO ARAUJO", "LUCIANO DIAS", "LUCIANO FREITAS", "LUCIO ROCHA BARROSO", "LUIZ CARLOS DE SOUZA", "LUIZ FERNANDO SILVA DE ANDRADE", "LUIZ OTAVIO", "MARCELO FERREIRA DA SILVA", "MARCELO FERREIRA DE ALMEIDA", "MARCELO FERREIRA DE JESUS", "MARCELO PAIM", "MARCELO RODRIGUES LACERDA", "MARCOS AURELIO JUVENTINO", "MARCOS ROBERTO MORAIS DE AZEVEDO", "MARLONE ERMELINDO DIAS MARTINS", "MATEUS KENNEDY ROSA FREITAS", "MAURICIO GONCALVES DA SILVA", "MAURO LUCIO MENDES", "NATIVO ROSA DA FONSECA", "OLIMPIO MATIAS RODRIGUES", "ORLANDO GOMES DA CUNHA", "PAULO CESAR ARRUDA ALVES", "PEDRO SANTOS DA MATA", "PEDRO VITOR ALEXANDRE", "RAFAEL COSME DOS SANTOS SILVA", "RANS POSSE", "RENATO SA JANUARIO", "RIVONILDO OLIVEIRA LIMA", "ROBERTO JOSUEL", "ROBERTO JUNIOR FERNANDES DE SOUZA", "ROBSON DA COSTA", "RODRIGO INACIO DA SILVA", "ROGÉRIO AGOSTINHO", "SIDNEY JOVANO ROQUE", "THIAGO ALVES DIAS", "THIAGO DO NASCIMENTO FARIAS", "TIAGO CANGUSSU SILVA", "TIAGO DANTAS", "VALDIR ALEXANDRE SOUZA", "VINICIUS DE OLIVEIRA RODRIGUES", "WELINGTON PARREIRAS", "WENDEL ANDERSON", "ZWINGLIO APARECIDO DA CONCEIÇÃO"];
+  var S = byId("f-status"), A = byId("f-armador");
+  var state = {rows: load(KEY, []), filter: "todos", confirmId: null};
+  var cfg = load(KEY_CFG, {fone:"", placas:true});
+  var cad = load(KEY_CAD, {placas:[], motoristas:[]});
+  if(!cad.placas) cad.placas=[]; if(!cad.motoristas) cad.motoristas=[];
+  function saveCad(){try{localStorage.setItem(KEY_CAD, JSON.stringify(cad))}catch(e){}}
+  function allPlacas(){return PLACAS_BASE.concat(cad.placas).filter(function(v,i,a){return a.indexOf(v)===i}).sort()}
+  function allMots(){return MOTORISTAS_BASE.concat(cad.motoristas).filter(function(v,i,a){return a.indexOf(v)===i}).sort(function(a,b){return a.localeCompare(b,"pt-BR")})}
+  function fold(t){return (t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/\s+/g," ").trim()}
+
+  function byId(id){return document.getElementById(id)}
+  function load(k, d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+  function save(){try{localStorage.setItem(KEY, JSON.stringify(state.rows));return true}catch(e){return false}}
+  function saveCfg(){try{localStorage.setItem(KEY_CFG, JSON.stringify(cfg))}catch(e){}}
+  function st(id){for(var i=0;i<STATUS.length;i++) if(STATUS[i].id===id) return STATUS[i]; return null}
+  function pad(n){return String(n).padStart(2,"0")}
+  function fmtDT(ts){var d=new Date(ts);return pad(d.getDate())+"/"+pad(d.getMonth()+1)+" "+pad(d.getHours())+":"+pad(d.getMinutes())}
+  function fmtH(ts){var d=new Date(ts);return pad(d.getHours())+":"+pad(d.getMinutes())}
+  function dur(ts){var m=Math.max(0,Math.floor((Date.now()-ts)/60000));var h=Math.floor(m/60);return h?h+"h"+pad(m%60):m+" min"}
+  function isToday(ts){var a=new Date(ts),b=new Date();return a.toDateString()===b.toDateString()}
+  function normPlaca(v){return (v||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
+  function validPlaca(p){return /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(p)}
+  function showPlaca(p){return /^[A-Z]{3}[0-9]{4}$/.test(p)?p.slice(0,3)+"-"+p.slice(3):p}
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+  function el(tag, attrs, kids){var e=document.createElement(tag);if(attrs)for(var k in attrs){if(k==="text")e.textContent=attrs[k];else if(k==="style")e.style.cssText=attrs[k];else e.setAttribute(k,attrs[k])}(kids||[]).forEach(function(c){if(c)e.appendChild(c)});return e}
+  function active(){return state.rows.filter(function(r){return !r.saida})}
+
+  // prune: saídas com mais de 7 dias
+  var cutoff = Date.now()-7*864e5;
+  state.rows = state.rows.filter(function(r){return !r.saida || r.saida>cutoff}); save();
+
+  var formArm="", formStatus=STATUS[0].id;
+  function statusButtons(cur, onPick){
+    var g=el("div",{class:"opt-grid st",role:"group","aria-label":"Situação"});
+    STATUS.forEach(function(x){
+      var b=el("button",{type:"button",class:"opt stt","aria-pressed":String(x.id===cur),style:"--c:var("+x.c+")",text:x.label});
+      b.addEventListener("click",function(){onPick(x.id)});
+      g.appendChild(b);
+    });
+    return g;
+  }
+  function renderFormOpts(){
+    A.textContent="";
+    ARMADORES.forEach(function(a){
+      var b=el("button",{type:"button",class:"opt","aria-pressed":String(formArm===a),text:a});
+      b.addEventListener("click",function(){formArm=a;byId("lbl-outro").hidden=a!=="Outro";renderFormOpts();if(a==="Outro")byId("f-outro").focus()});
+      A.appendChild(b);
+    });
+    var g=statusButtons(formStatus,function(id){formStatus=id;renderFormOpts()});
+    S.textContent=""; while(g.firstChild) S.appendChild(g.firstChild);
+  }
+  renderFormOpts();
+
+  var formPlaca="", formMot="";
+  function renderPlacas(){
+    var g=byId("f-placa-grid"), q=normPlaca(byId("f-placa-busca").value); g.textContent="";
+    var emPlanta={}; active().forEach(function(r){emPlanta[r.placa]=1});
+    var list=allPlacas().filter(function(p){return !q||p.indexOf(q)>=0});
+    if(!list.length){g.appendChild(el("div",{class:"hint",text:"Nenhuma placa encontrada. Use “Cadastrar nova placa”."}));return}
+    list.forEach(function(p){
+      var inside=!!emPlanta[p];
+      var b=el("button",{type:"button",class:"opt plate-opt","aria-pressed":String(formPlaca===p)},[el("span",{text:showPlaca(p)}),inside?el("small",{text:"em planta"}):null]);
+      if(inside) b.disabled=true;
+      b.addEventListener("click",function(){formPlaca=formPlaca===p?"":p;renderPlacas()});
+      g.appendChild(b);
+    });
+  }
+  byId("f-placa-busca").addEventListener("input",renderPlacas);
+  byId("btn-nova-placa").addEventListener("click",function(){byId("box-nova-placa").hidden=false;this.hidden=true;byId("f-placa-nova").focus()});
+  function closeNovaPlaca(){byId("box-nova-placa").hidden=true;byId("btn-nova-placa").hidden=false;byId("f-placa-nova").value=""}
+  byId("btn-cancelar-placa").addEventListener("click",closeNovaPlaca);
+  byId("btn-salvar-placa").addEventListener("click",function(){
+    var msg=byId("form-msg"), p=normPlaca(byId("f-placa-nova").value);
+    if(!validPlaca(p)){msg.className="msg full err";msg.textContent="Placa inválida. Use 7 caracteres, como ABC1234 ou ABC1D23.";return}
+    if(allPlacas().indexOf(p)<0){cad.placas.push(p);saveCad();msg.className="msg full";msg.textContent="Placa "+showPlaca(p)+" cadastrada e selecionada."}
+    else {msg.className="msg full";msg.textContent="A placa "+showPlaca(p)+" já existia na lista e foi selecionada."}
+    formPlaca=p; byId("f-placa-busca").value=""; closeNovaPlaca(); renderPlacas(); renderCad();
+  });
+  byId("f-placa-nova").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();byId("btn-salvar-placa").click()}});
+
+  function renderMots(){
+    var btn=byId("f-mot");
+    byId("f-mot-label").textContent=formMot||"Selecione o motorista";
+    btn.classList.toggle("is-empty",!formMot);
+    if(!byId("dd-mot-panel").hidden) renderMotList();
+  }
+  function renderMotList(){
+    var list=byId("dd-mot-list"), q=fold(byId("dd-mot-filtro").value); list.textContent="";
+    var words=q?q.split(" "):[];
+    var found=allMots().filter(function(m){var f=fold(m);return words.every(function(w){return f.indexOf(w)>=0})});
+    var nb=el("button",{type:"button",class:"dd-item new",text:"+ Cadastrar novo motorista"});
+    nb.addEventListener("click",function(){closeDD();byId("box-novo-mot").hidden=false;byId("f-mot-novo").value=byId("dd-mot-filtro").value.toUpperCase();byId("f-mot-novo").focus()});
+    list.appendChild(nb);
+    if(!found.length) list.appendChild(el("div",{class:"dd-empty",text:"Nenhum motorista com esse nome."}));
+    found.forEach(function(m){
+      var it=el("button",{type:"button",class:"dd-item",role:"option","aria-selected":String(m===formMot),text:m,title:m});
+      it.addEventListener("click",function(){formMot=m;closeNovoMot();closeDD();renderMots()});
+      list.appendChild(it);
+    });
+  }
+  function openDD(){byId("dd-mot-panel").hidden=false;byId("f-mot").setAttribute("aria-expanded","true");byId("dd-mot-filtro").value="";renderMotList();
+    var sel=byId("dd-mot-list").querySelector('[aria-selected="true"]'); if(sel) sel.scrollIntoView({block:"center"});}
+  function closeDD(){byId("dd-mot-panel").hidden=true;byId("f-mot").setAttribute("aria-expanded","false")}
+  function closeNovoMot(){byId("box-novo-mot").hidden=true;byId("f-mot-novo").value=""}
+  byId("f-mot").addEventListener("click",function(){byId("dd-mot-panel").hidden?openDD():closeDD()});
+  byId("dd-mot-filtro").addEventListener("input",renderMotList);
+  document.addEventListener("click",function(e){if(!byId("dd-mot").contains(e.target)) closeDD()});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape") closeDD()});
+  byId("btn-cancelar-mot").addEventListener("click",function(){closeNovoMot();renderMots()});
+  byId("btn-salvar-mot").addEventListener("click",function(){
+    var m=byId("form-msg"), nome=byId("f-mot-novo").value.toUpperCase().replace(/\s+/g," ").trim();
+    if(nome.split(" ").length<2){m.className="msg full err";m.textContent="Digite nome e sobrenome para cadastrar o motorista.";return}
+    var ja=allMots().filter(function(x){return fold(x)===fold(nome)})[0];
+    if(ja){formMot=ja;m.className="msg full";m.textContent="O motorista "+ja+" já estava na lista e foi selecionado."}
+    else{cad.motoristas.push(nome);saveCad();formMot=nome;m.className="msg full";m.textContent="Motorista "+nome+" cadastrado e selecionado."}
+    closeNovoMot();renderMots();renderCad();
+  });
+  byId("f-mot-novo").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();byId("btn-salvar-mot").click()}});
+
+  function renderCad(){
+    var box=byId("cad-list"); box.textContent="";
+    var items=cad.placas.map(function(p){return{t:"placa",v:p,l:showPlaca(p)}}).concat(cad.motoristas.map(function(m){return{t:"motorista",v:m,l:m}}));
+    if(!items.length){box.appendChild(el("div",{class:"hint",text:"Nenhum cadastro novo. Placas e motoristas cadastrados no registro de entrada aparecem aqui."}));return}
+    items.forEach(function(it){
+      var rm=el("button",{type:"button",class:"btn small ghost danger",text:"Remover"});
+      rm.addEventListener("click",function(){
+        if(it.t==="placa") cad.placas=cad.placas.filter(function(x){return x!==it.v}); else cad.motoristas=cad.motoristas.filter(function(x){return x!==it.v});
+        saveCad(); if(formPlaca===it.v) formPlaca=""; if(formMot===it.v) formMot=""; renderCad(); renderPlacas(); renderMots();
+      });
+      box.appendChild(el("div",{class:"cad-row"},[el("span",{},[el("small",{text:(it.t==="placa"?"Placa · ":"Motorista · ")}),document.createTextNode(it.l)]),rm]));
+    });
+  }
+
+  byId("f-fone").value = cfg.fone || "";
+  byId("f-placas").checked = cfg.placas !== false;
+  byId("f-fone").addEventListener("input",function(){cfg.fone=this.value;saveCfg();renderSummary()});
+  byId("f-placas").addEventListener("change",function(){cfg.placas=this.checked;saveCfg();renderSummary()});
+
+  byId("form").addEventListener("submit",function(ev){
+    ev.preventDefault();
+    var msg=byId("form-msg"); msg.className="msg full";
+    var p=formPlaca;
+    var arm=formArm==="Outro"?byId("f-outro").value.trim():formArm;
+    if(!p){msg.className="msg full err";msg.textContent="Toque em uma placa da lista (ou cadastre uma nova).";return}
+    if(!arm){msg.className="msg full err";msg.textContent="Toque no armador.";return}
+    if(active().some(function(r){return r.placa===p})){msg.className="msg full err";msg.textContent=showPlaca(p)+" já está em planta. Atualize a carreta na lista abaixo.";return}
+    var now=Date.now();
+    state.rows.push({id:uid(),placa:p,armador:arm,motorista:formMot,status:formStatus,semCavalo:byId("f-cavalo").checked,entrada:now,desde:now,saida:null});
+    if(!save()){msg.className="msg full err";msg.textContent="Não foi possível salvar neste navegador. Verifique se não está em aba anônima.";}
+    else msg.textContent=showPlaca(p)+" registrada às "+fmtH(now)+".";
+    formPlaca="";formMot="";byId("f-placa-busca").value="";closeNovoMot();byId("f-cavalo").checked=false;byId("f-outro").value="";formArm="";formStatus=STATUS[0].id;byId("lbl-outro").hidden=true;renderFormOpts();
+    render();
+  });
+
+  function update(id, patch){
+    state.rows.forEach(function(r){if(r.id===id){for(var k in patch)r[k]=patch[k]}});
+    save(); render();
+  }
+
+  function renderBoard(){
+    var rows=active(), b=byId("board"); b.textContent="";
+    var tiles=[{id:"todos",n:rows.length,l:"Em planta",cls:"total"}];
+    STATUS.forEach(function(s){tiles.push({id:s.id,n:rows.filter(function(r){return r.status===s.id}).length,l:s.label,c:s.c})});
+    tiles.push({id:"cavalo",n:rows.filter(function(r){return r.semCavalo}).length,l:"Carretas sem cavalo",c:"--s-cavalo"});
+    tiles.forEach(function(t){
+      var btn=el("button",{type:"button",class:"tile"+(t.cls?" "+t.cls:""),"aria-pressed":String(state.filter===t.id),style:t.c?"--c:var("+t.c+")":""},[el("span",{class:"n",text:String(t.n)}),el("span",{class:"l",text:t.l})]);
+      btn.addEventListener("click",function(){state.filter=state.filter===t.id&&t.id!=="todos"?"todos":t.id;render()});
+      b.appendChild(btn);
+    });
+  }
+
+  function renderFilters(){
+    var f=byId("filters"); f.textContent="";
+    var opts=[{id:"todos",l:"Todas"}].concat(STATUS.map(function(s){return{id:s.id,l:s.short}})).concat([{id:"cavalo",l:"Sem cavalo"}]);
+    opts.forEach(function(o){var c=el("button",{type:"button",class:"chip","aria-pressed":String(state.filter===o.id),text:o.l});c.addEventListener("click",function(){state.filter=o.id;render()});f.appendChild(c)});
+  }
+
+  function renderList(){
+    var list=byId("list"); list.textContent="";
+    var rows=active().filter(function(r){return state.filter==="todos"||(state.filter==="cavalo"?r.semCavalo:r.status===state.filter)});
+    rows.sort(function(a,b){return STATUS.indexOf(st(a.status))-STATUS.indexOf(st(b.status))||a.desde-b.desde});
+    if(!rows.length){
+      list.appendChild(el("div",{class:"empty"},[el("strong",{text:active().length?"Nenhuma carreta nesta situação":"Nenhuma carreta em planta"}),el("span",{text:active().length?"Toque em “Todas” para ver a lista completa.":"Registre a primeira carreta acima com a placa e o armador."})]));
+      return;
+    }
+    rows.forEach(function(r){
+      var s=st(r.status)||STATUS[0];
+      var card=el("div",{class:"card",style:"--c:var("+s.c+")"});
+      card.appendChild(el("div",{class:"plate"},[el("span",{text:showPlaca(r.placa)})]));
+      var meta=el("div",{class:"meta"},[
+        el("div",{},[el("span",{class:"pill",text:s.short}),r.semCavalo?el("span",{class:"pill cavalo",text:"Sem cavalo"}):null]),
+        el("span",{class:"arm",text:r.armador}),
+        r.motorista?el("span",{class:"mot",text:r.motorista}):null,
+        el("span",{class:"since",text:"Nesta situação há "+dur(r.desde)+" · entrou "+fmtDT(r.entrada)})
+      ]);
+      card.appendChild(meta);
+      var acts=el("div",{class:"actions"});
+      card.appendChild(statusButtons(r.status,function(id){if(id!==r.status)update(r.id,{status:id,desde:Date.now()})}));
+      var cav=el("button",{type:"button",class:"btn small",text:r.semCavalo?"Cavalo engatado":"Ficou sem cavalo"});
+      cav.addEventListener("click",function(){update(r.id,{semCavalo:!r.semCavalo})});
+      acts.appendChild(cav);
+      var out=el("button",{type:"button",class:"btn small primary",text:"Saiu da planta"});
+      out.addEventListener("click",function(){update(r.id,{saida:Date.now()})});
+      acts.appendChild(out);
+      var del=el("button",{type:"button",class:"btn small ghost danger",text:"Excluir"});
+      del.addEventListener("click",function(){state.confirmId=r.id;renderList()});
+      acts.appendChild(del);
+      card.appendChild(acts);
+      if(state.confirmId===r.id){
+        var yes=el("button",{type:"button",class:"btn small danger",text:"Excluir registro"});
+        yes.addEventListener("click",function(){state.rows=state.rows.filter(function(x){return x.id!==r.id});state.confirmId=null;save();render()});
+        var no=el("button",{type:"button",class:"btn small",text:"Cancelar"});
+        no.addEventListener("click",function(){state.confirmId=null;renderList()});
+        card.appendChild(el("div",{class:"confirm"},[el("span",{text:"Excluir "+showPlaca(r.placa)+"? Use só para registro feito por engano."}),yes,no]));
+      }
+      list.appendChild(card);
+    });
+  }
+
+  // Resumo para WhatsApp: tabelas em bloco monoespaçado (```), até 27 colunas para caber na tela do celular
+  var WA = {
+    aguard_doca:  {ico:"🟡", tab:"Aguard. doca (vazio)", head:"AGUARDANDO DOCA (VAZIO)"},
+    na_doca:      {ico:"🔵", tab:"Na doca / ovação",     head:"NA DOCA – EM OVAÇÃO"},
+    aguard_doc:   {ico:"🟣", tab:"Aguard. documentação", head:"AGUARDANDO DOCUMENTAÇÃO"},
+    aguard_lacre: {ico:"🟠", tab:"Aguard. lacre",        head:"AGUARDANDO LACRE"},
+    liberado:     {ico:"🟢", tab:"Liberado p/ viagem",   head:"LIBERADO PARA VIAGEM"}
+  };
+  var ABREV = {};
+  var LINE = "───────────────────────────";
+  function rpad(s,n){s=String(s);return s.length>n?s.slice(0,n):s+" ".repeat(n-s.length)}
+  function lpad(s,n){s=String(s);return s.length>=n?s:" ".repeat(n-s.length)+s}
+  function durC(ts){var m=Math.max(0,Math.floor((Date.now()-ts)/60000));var h=Math.floor(m/60);return h?h+"h"+pad(m%60):m+"m"}
+  function arm(a){return ABREV[a]||a}
+
+  function summaryText(){
+    var rows=active(), now=new Date();
+    var saidas=state.rows.filter(function(r){return r.saida&&isToday(r.saida)}).length;
+    var cav=rows.filter(function(r){return r.semCavalo}).length;
+    var t="*🚛 PÁTIO VIBRA · RESUMO*\n";
+    t+="_"+pad(now.getDate())+"/"+pad(now.getMonth()+1)+"/"+now.getFullYear()+" às "+fmtH(now)+"_\n\n";
+    var tb=[rpad("SITUAÇÃO",22)+lpad("QTD",5), LINE];
+    STATUS.forEach(function(s){tb.push(rpad(WA[s.id].tab,22)+lpad(rows.filter(function(r){return r.status===s.id}).length,5))});
+    tb.push(LINE);
+    tb.push(rpad("TOTAL EM PLANTA",22)+lpad(rows.length,5));
+    tb.push(rpad("Carretas sem cavalo",22)+lpad(cav,5));
+    tb.push(rpad("Saídas hoje",22)+lpad(saidas,5));
+    t+="```\n"+tb.join("\n")+"\n```";
+    if(cfg.placas!==false&&rows.length){
+      var anySC=false;
+      STATUS.forEach(function(s){
+        var g=rows.filter(function(r){return r.status===s.id}).sort(function(a,b){return a.desde-b.desde});
+        if(!g.length) return;
+        t+="\n\n*"+WA[s.id].ico+" "+WA[s.id].head+" ("+g.length+")*\n";
+        var lines=[rpad("PLACA",9)+rpad("ARMADOR",11)+lpad("TEMPO",5)];
+        g.forEach(function(r){if(r.semCavalo)anySC=true;lines.push(rpad(showPlaca(r.placa),9)+rpad(arm(r.armador),11)+lpad(durC(r.desde),5)+(r.semCavalo?" SC":""))});
+        t+="```\n"+lines.join("\n")+"\n```";
+      });
+      t+="\n\n_Tempo = há quanto está na situação atual"+(anySC?" · SC = sem cavalo":"")+"_";
+    }
+    return t;
+  }
+
+  // Prévia com a formatação do WhatsApp (*negrito*, _itálico_, ```bloco```)
+  function renderPreview(t){
+    var box=byId("preview"); box.textContent="";
+    t.split("```").forEach(function(part,i){
+      if(i%2===1){box.appendChild(el("div",{class:"wa-mono",text:part.replace(/^\n|\n$/g,"")}));return}
+      part.split("\n").forEach(function(line,j,arr){
+        if(!line){ if(j>0&&j<arr.length-1) box.appendChild(el("div",{class:"wa-gap"})); return }
+        var d=el("div"),m;
+        if((m=line.match(/^\*(.*)\*$/))) d.appendChild(el("strong",{text:m[1]}));
+        else if((m=line.match(/^_(.*)_$/))) d.appendChild(el("em",{text:m[1]}));
+        else d.textContent=line;
+        box.appendChild(d);
+      });
+    });
+  }
+
+  function foneDigits(){var d=(cfg.fone||"").replace(/\D/g,"");if(d.length===10||d.length===11)d="55"+d;return d}
+
+  function renderSummary(){
+    var t=summaryText(); renderPreview(t);
+    var d=foneDigits(), a=byId("btn-wa"), m=byId("send-msg");
+    if(d.length>=12){a.href="https://wa.me/"+d+"?text="+encodeURIComponent(t);a.removeAttribute("aria-disabled");m.textContent="O WhatsApp abre com a mensagem pronta. Confira e toque em enviar.";m.className="msg"}
+    else{a.href="https://wa.me/?text="+encodeURIComponent(t);m.textContent="Sem número informado: o WhatsApp vai pedir para escolher o contato.";m.className="msg"}
+  }
+
+  byId("btn-copy").addEventListener("click",function(){
+    var t=summaryText(), m=byId("send-msg");
+    try{navigator.clipboard.writeText(t).then(function(){m.textContent="Resumo copiado. Cole no WhatsApp."},function(){selectPreview();m.textContent="Selecionei o texto do resumo. Copie e cole no WhatsApp."})}
+    catch(e){selectPreview();m.textContent="Selecionei o texto do resumo. Copie e cole no WhatsApp."}
+  });
+  function selectPreview(){var r=document.createRange();r.selectNodeContents(byId("preview"));var s=window.getSelection();s.removeAllRanges();s.addRange(r)}
+
+  function csv(){
+    var head=["Placa","Motorista","Armador","Situação","Sem cavalo","Entrada","Na situação desde","Saída"];
+    var lines=[head.join(";")];
+    state.rows.slice().sort(function(a,b){return a.entrada-b.entrada}).forEach(function(r){
+      var s=st(r.status);
+      lines.push([showPlaca(r.placa),r.motorista||"",r.armador,r.saida?"Saiu":(s?s.label:r.status),r.semCavalo?"Sim":"Não",fmtFull(r.entrada),fmtFull(r.desde),r.saida?fmtFull(r.saida):""].map(function(v){v=String(v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(";"));
+    });
+    return "﻿"+lines.join("\r\n");
+  }
+  function fmtFull(ts){var d=new Date(ts);return pad(d.getDate())+"/"+pad(d.getMonth()+1)+"/"+d.getFullYear()+" "+pad(d.getHours())+":"+pad(d.getMinutes())}
+
+  var downloads=null;
+  if(window.claude&&window.claude.use&&window.parent!==window){window.claude.use("downloads").then(function(d){downloads=d}).catch(function(){})}
+  byId("btn-csv").addEventListener("click",function(){
+    var m=byId("exp-msg"), now=new Date();
+    if(!state.rows.length){m.textContent="Ainda não há registros para exportar.";return}
+    var name="patio-vibra-"+now.getFullYear()+pad(now.getMonth()+1)+pad(now.getDate())+"-"+pad(now.getHours())+pad(now.getMinutes())+".csv";
+    if(!downloads){
+      try{
+        var blob=new Blob([csv()],{type:"text/csv;charset=utf-8"}), url=URL.createObjectURL(blob), a=document.createElement("a");
+        a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},4000);
+        m.textContent="Planilha salva: "+name;
+      }catch(e){m.textContent="Não foi possível salvar o arquivo neste aparelho."}
+      return;
+    }
+    downloads.save({filename:name,data:csv()}).then(function(){m.textContent="Planilha salva: "+name},function(e){m.textContent=e&&e.code==="declined"?"Download cancelado.":"Não foi possível salvar o arquivo agora."});
+  });
+
+  byId("btn-hist").addEventListener("click",function(){var h=byId("hist");h.hidden=!h.hidden;this.textContent=h.hidden?"Ver saídas de hoje":"Esconder saídas";renderHist()});
+  function renderHist(){
+    var h=byId("hist"); if(h.hidden) return; h.textContent="";
+    var rows=state.rows.filter(function(r){return r.saida&&isToday(r.saida)}).sort(function(a,b){return b.saida-a.saida});
+    if(!rows.length){h.appendChild(el("div",{class:"empty"},[el("span",{text:"Nenhuma saída registrada hoje."})]));return}
+    rows.forEach(function(r){
+      var card=el("div",{class:"card",style:"--c:var(--s-saida)"},[
+        el("div",{class:"plate"},[el("span",{text:showPlaca(r.placa)})]),
+        el("div",{class:"meta"},[el("span",{class:"arm",text:r.armador}),r.motorista?el("span",{class:"mot",text:r.motorista}):null,el("span",{class:"since",text:"Entrou "+fmtH(r.entrada)+" · saiu "+fmtH(r.saida)})])
+      ]);
+      var undo=el("button",{type:"button",class:"btn small",text:"Desfazer saída"});
+      undo.addEventListener("click",function(){update(r.id,{saida:null})});
+      card.appendChild(el("div",{class:"actions"},[undo]));
+      h.appendChild(card);
+    });
+  }
+
+  var hostTheme=document.documentElement.getAttribute("data-theme");
+  function applyTheme(){
+    var t=cfg.tema||"auto", root=document.documentElement;
+    if(t==="auto"){ if(hostTheme) root.setAttribute("data-theme",hostTheme); else root.removeAttribute("data-theme") }
+    else root.setAttribute("data-theme",t);
+    Array.prototype.forEach.call(byId("theme").querySelectorAll("button"),function(b){b.setAttribute("aria-pressed",String(b.getAttribute("data-t")===t))});
+  }
+  Array.prototype.forEach.call(byId("theme").querySelectorAll("button"),function(b){
+    b.addEventListener("click",function(){cfg.tema=b.getAttribute("data-t");saveCfg();applyTheme()});
+  });
+  applyTheme();
+
+  function tick(){var d=new Date();byId("clock").textContent=pad(d.getDate())+"/"+pad(d.getMonth()+1)+"/"+d.getFullYear()+" · "+fmtH(d)}
+  function render(){renderPlacas();renderMots();renderCad();renderBoard();renderFilters();renderList();renderSummary();renderHist();tick()}
+  render();
+  setInterval(function(){renderList();renderSummary();tick()},60000);
+})();
+</script>
+
+<script>
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}
+</script>
+</body>
+</html>
